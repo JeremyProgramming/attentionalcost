@@ -11,21 +11,6 @@ sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
      path="")
 
 """
-# Author: Cary Stothart (cary.stothart@gmail.com)
-# Date: 02/12/2013
-# Version: 1.0
-
-# TODO
-# Replaced clock with perf clock - c
-# Background thread does not work, needs fix or something - time.sleep works okay ig
-# sys.exit does not work - c
-# Commented out multi thread - c
-# commented out twilio - c
-# edited random number so only the non messaging/call group gets done
-# Last fix DO NOT save the participants phone number or email this will fuck up data
-# Last fix 2 Make sure to fix data output
-# Removed alert status - c
-
 import time
 import random
 
@@ -66,6 +51,7 @@ def sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
     sart_break_inst(win)
     random.seed(partInfo[0])
     ranNum = random.randint(1, 90)
+    # These three conditions are subject to change
     if (ranNum >= 1) and (ranNum <= 30):
         cond = "SMS"
         mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
@@ -187,7 +173,7 @@ def sart_break_inst(win):
             eTime = time.perf_counter() - startTime
             inst.draw()
             win.flip()
-            if eTime > 5: #changed
+            if eTime > 60:
                 break
         event.clearEvents()
         while 'b' not in event.getKeys():
@@ -298,7 +284,7 @@ def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim,
             str(endTime), str(totalTime)]
 
 def main():
-    sart(reps=1, omitNum=3, practice=False,      
+    sart(reps=8, omitNum=3, practice=True,      
          path=(""))
 
 if __name__ == "__main__":
