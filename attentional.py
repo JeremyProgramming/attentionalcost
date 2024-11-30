@@ -16,23 +16,20 @@ sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
 # Version: 1.0
 
 # TODO
-# Replaced clock with perf clock
+# Replaced clock with perf clock - c
 # Background thread does not work, needs fix or something - time.sleep works okay ig
-# sys.exit does not work
-# Commented out multi thread
-# commented out twilio
+# sys.exit does not work - c
+# Commented out multi thread - c
+# commented out twilio - c
 # edited random number so only the non messaging/call group gets done
 # Last fix DO NOT save the participants phone number or email this will fuck up data
 # Last fix 2 Make sure to fix data output
+# Removed alert status - c
 
 import time
-import copy
-import re
 import random
-from threading import Thread
 
 from psychopy import visual, core, data, event, gui
-from twilio.rest import TwilioRestClient
 
 # This is only modified by the alert functions.
 alertStatus = "NA"
@@ -50,7 +47,7 @@ def sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
     path.........The directory in which the output file will be placed.
     """
     partInfo = part_info_gui()
-    partPhone = check_phone_num(partInfo[4])
+    partPhone = partInfo[4]
     mainResultList = []
     fileName = "SART_" + str(partInfo[0]) + ".txt"
     outFile = open(path + fileName, "w")
@@ -60,34 +57,29 @@ def sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
     if practice == True:
         sart_prac_inst(win, omitNum)
         mainResultList.extend(sart_block(win, fb=True, omitNum=omitNum,
-                                     reps=1, bNum=0, 
-                                     phoneNum=partPhone,
+                                     reps=1, bNum=0,
                                      sms=False, call=False))
     sart_act_task_inst(win)
     mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                     reps=reps, bNum=1, 
-                                     phoneNum=partPhone,
+                                     reps=reps, bNum=1,
                                      sms=False, call=False))
     sart_break_inst(win)
     random.seed(partInfo[0])
-    ranNum = random.randint(61, 90)
+    ranNum = random.randint(1, 90)
     if (ranNum >= 1) and (ranNum <= 30):
         cond = "SMS"
         mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                         reps=reps, bNum=2, 
-                                         phoneNum=partPhone,
+                                         reps=reps, bNum=2,
                                          sms=True, call=False))
     elif (ranNum >= 31) and (ranNum <= 60):
         cond = "Call"
         mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                         reps=reps, bNum=2, 
-                                         phoneNum=partPhone,
+                                         reps=reps, bNum=2,
                                          sms=False, call=True))
     else:
         cond = "No Alert"
         mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                         reps=reps, bNum=2, 
-                                         phoneNum=partPhone,
+                                         reps=reps, bNum=2,
                                          sms=False, call=False))
     outFile.write("group\tpart_num\tpart_gender\tpart_age\tpart_school_yr\t" +
                   "part_normal_vision\texp_initials\tblock_num\ttrial_num" +
@@ -98,10 +90,11 @@ def sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
     for line in mainResultList:
         outFile.write(cond + "\t")
         for item in partInfo:
-            outFile.write(str(item) + "\t")
+            if item not in ['Part. Phone: ','Part. Email: ']:
+                outFile.write(str(partInfo[item]) + "\t")
         for col in line:
             outFile.write(str(col) + "\t")
-        outFile.write("time.perf_counter()\n")
+        outFile.write("time.clock()\n")
     outFile.close()
     
 def part_info_gui():
@@ -129,20 +122,8 @@ def part_info_gui():
     if info.OK:
         infoData = info.data
     else:
-        sys.exit()
+        exit("Incomplete info")
     return infoData
-    
-def check_phone_num(phoneNum):
-    type1 = re.search(".*(\d{3}).*(\d{3}).*(\d{4}).*", phoneNum)
-    type2 = re.search(".*(\d{3}).*(\d{4}).*", phoneNum)
-    if type1 is not None:
-            phoneNum = type1.group(1) + type1.group(2) + type1.group(3)
-            return phoneNum
-    if type2 is not None:
-            phoneNum = "850" + type2.group(1) + type2.group(2)
-            return phoneNum
-    phoneNum = ' '
-    return phoneNum
 
 def sart_init_inst(win, omitNum):
     inst = visual.TextStim(win, text=("In this task, a series of numbers will" +
@@ -213,11 +194,7 @@ def sart_break_inst(win):
             nbInst.draw()
             win.flip()
 
-def sart_block(win, fb, omitNum, reps, bNum, phoneNum, sms, call):
-    account = "ENTER ACCOUNT NUMBER HERE" # Twilio account number.
-    token = "ENTER TOKEN NUMBER HERE"  # Twilio token number.
-    #client = TwilioRestClient(account, token)
-    client = True
+def sart_block(win, fb, omitNum, reps, bNum, sms, call):
     mouse = event.Mouse(visible=0)
     xStim = visual.TextStim(win, text="X", height=3.35, color="white", 
                             pos=(0, 0))
@@ -246,8 +223,9 @@ def sart_block(win, fb, omitNum, reps, bNum, phoneNum, sms, call):
         resultList.append(sart_trial(win, fb, omitNum, xStim, circleStim,
                               numStim, correctStim, incorrectStim, clock, 
                               trials.thisTrial['fontSize'], 
-                              trials.thisTrial['number'], tNum, bNum, mouse,
-                              phoneNum, client, sms, call))
+                              trials.thisTrial['number'], tNum, bNum, mouse
+                              , sms, call))
+        
     endTime = time.perf_counter()
     totalTime = endTime - startTime
     for row in resultList:
@@ -259,8 +237,8 @@ def sart_block(win, fb, omitNum, reps, bNum, phoneNum, sms, call):
     return resultList
     
 def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim, 
-               incorrectStim, clock, fontSize, number, tNum, bNum, mouse,
-               phoneNum, client, sms, call):
+               incorrectStim, clock, fontSize, number, tNum, bNum, mouse
+               , sms, call):
     startTime = time.perf_counter()
     alertSent = 0
     alertType = "NA"
@@ -287,9 +265,6 @@ def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim,
             alertType = "Call"
         else:
             alertType = "No Alert"
-        """t = Thread(target=send_alert, args=(call, sms, client, 
-                                                      phoneNum))
-        t.start()"""
     waitTime = .90 - (time.perf_counter() - maskStartTime)
     core.wait(waitTime, hogCPUperiod=waitTime)
     allKeys = event.getKeys(timeStamped=clock)
@@ -320,40 +295,11 @@ def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim,
     global alertStatus
     return [str(bNum), str(tNum), str(alertSent), str(alertType), str(number),
             str(omitNum), str(respAcc), str(respRt), str(startTime), 
-            str(endTime), str(totalTime), str(alertStatus)]
-
-def send_alert(call, sms, client, phoneNum):
-    currentCall = "NA"
-    if call == True:
-        currentCall = client.calls.create(to=phoneNum, from_="ENTER NUMBER HERE", 
-                                   url=("http://twimlets.com/holdmusic?Buck" +
-                                        "et=com.twilio.music.ambient"), 
-                                        timeout=60)                                       
-    elif sms == True:
-        message = client.sms.messages.create(to=phoneNum, from_="ENTER NUMBER HERE",
-                                             body=str("Hello"))
-    startTime = time.perf_counter()
-    while(1):
-        delay(sms, call, client, currentCall)
-        #core.wait(1) #TODO - fix
-        time.sleep(1)
-        endTime = time.perf_counter() - startTime
-        if endTime > 70:
-            break
-        
-def delay(sms, call, client, currentCall):
-    global alertStatus
-    if call == True:
-        callInfo = client.calls.get(currentCall.sid)    
-        alertStatus = callInfo.status
-    elif sms == True:
-        alertStatus = "NA"
-    else:
-        alertStatus = "NA"
+            str(endTime), str(totalTime)]
 
 def main():
-    sart(reps=1, omitNum=3, practice=True,      
-         path=("testest"))
+    sart(reps=1, omitNum=3, practice=False,      
+         path=(""))
 
 if __name__ == "__main__":
     main()
