@@ -35,46 +35,30 @@ def sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
     partPhone = partInfo[4]
     mainResultList = []
     fileName = "SART_" + str(partInfo[0]) + ".txt"
+    filename2 = "POST_" + str(partInfo[0]) + ".txt"
     outFile = open(path + fileName, "w")
+    outFile2 = open(path + filename2, "w")
     win = visual.Window(fullscr=True, color="black", units='cm',
                         monitor=monitor)
     sart_init_inst(win, omitNum)
     if practice == True:
         sart_prac_inst(win, omitNum)
         mainResultList.extend(sart_block(win, fb=True, omitNum=omitNum,
-                                     reps=1, bNum=0,
-                                     sms=False, call=False))
+                                     reps=1, bNum=0))
     sart_act_task_inst(win)
     mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                     reps=reps, bNum=1,
-                                     sms=False, call=False))
+                                     reps=reps, bNum=1))
     sart_break_inst(win)
-    random.seed(partInfo[0])
-    ranNum = random.randint(1, 90)
-    # These three conditions are subject to change
-    if (ranNum >= 1) and (ranNum <= 30):
-        cond = "SMS"
-        mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                         reps=reps, bNum=2,
-                                         sms=True, call=False))
-    elif (ranNum >= 31) and (ranNum <= 60):
-        cond = "Call"
-        mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                         reps=reps, bNum=2,
-                                         sms=False, call=True))
-    else:
-        cond = "No Alert"
-        mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
-                                         reps=reps, bNum=2,
-                                         sms=False, call=False))
-    outFile.write("group\tpart_num\tpart_gender\tpart_age\tpart_school_yr\t" +
+    mainResultList.extend(sart_block(win, fb=False, omitNum=omitNum,
+                                         reps=reps, bNum=2))
+    
+    outFile.write("part_num\tpart_gender\tpart_age\t" +
                   "part_normal_vision\texp_initials\tblock_num\ttrial_num" +
                   "\talert_sent\talert_type\tnumber\tomit_num\tresp_acc\t" +
                   "resp_rt\ttrial_start_time_s\ttrial_end_time_s" +
-                  "\tdifference_s\talert_status\tmean_trial_time_s\t" +
+                  "\tdifference_s\tmean_trial_time_s\t" +
                   "timing_function\n")
     for line in mainResultList:
-        outFile.write(cond + "\t")
         for item in partInfo:
             if item not in ['Part. Phone: ','Part. Email: ']:
                 outFile.write(str(partInfo[item]) + "\t")
@@ -82,6 +66,15 @@ def sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
             outFile.write(str(col) + "\t")
         outFile.write("time.clock()\n")
     outFile.close()
+
+    win.close()
+    postQuestion = post_experiment()
+    outFile2.write("part_num\tph_Current_Setting\tPh_Current_Setting\n")
+    outFile2.write(partInfo[0] + "\t")
+    for item in postQuestion:
+        outFile2.write(str(postQuestion[item]) + "\t")
+    outFile2.write("\n")
+    outFile2.close()
     
 def part_info_gui():
     info = gui.Dlg(title="SART")
@@ -92,14 +85,6 @@ def part_info_gui():
     info.addField("Part. Age:  ")
     info.addField("Part. Email: ")
     info.addField("Part. Phone: ")
-    info.addField("Part. Year in School: ", 
-                  choices=["Please Select", "Freshman", "Sophmore", "Junior", 
-                           "Senior", "1st Year Graduate Student", 
-                           "2nd Year Graduate Student", 
-                           "3rd Year Graduate Student", 
-                           "4th Year Graduate Student",
-                           "5th Year Graduate Student", 
-                           "6th Year Graduate Student"])
     info.addField("Do you have normal or corrected-to-normal vision?", 
                   choices=["Please Select", "Yes", "No"])
     info.addText("Experimenter Info")
@@ -125,8 +110,9 @@ def sart_init_inst(win, omitNum):
                                       " space bar or any other key.\n\n" +
                                       "Please give equal importance to both" +
                                       " accuracy and speed while doing this" + 
-                                      " task.\n\nPress the b key when you" +
-                                      " are ready to start."), 
+                                      " task.\n\n If you have any questions" +
+                                      " be sure to ask them to the experimenter now!\n\n"+
+                                      "Press the b key when you are ready to start."), 
                            color="white", height=0.7, pos=(0, 0))
     event.clearEvents()
     while 'b' not in event.getKeys():
@@ -180,7 +166,7 @@ def sart_break_inst(win):
             nbInst.draw()
             win.flip()
 
-def sart_block(win, fb, omitNum, reps, bNum, sms, call):
+def sart_block(win, fb, omitNum, reps, bNum):
     mouse = event.Mouse(visible=0)
     xStim = visual.TextStim(win, text="X", height=3.35, color="white", 
                             pos=(0, 0))
@@ -196,7 +182,7 @@ def sart_block(win, fb, omitNum, reps, bNum, sms, call):
         fontSizes=[1.20, 3.00]
     else:
         fontSizes=[1.20, 1.80, 2.35, 2.50, 3.00]
-    list= data.createFactorialTrialList({"number" : numbers, 
+    list= data.createFactorialTrialList({"number" : numbers,
                                          "fontSize" : fontSizes})
     trials = data.TrialHandler(list, nReps=reps, method='random')
     clock = core.Clock()
@@ -209,8 +195,7 @@ def sart_block(win, fb, omitNum, reps, bNum, sms, call):
         resultList.append(sart_trial(win, fb, omitNum, xStim, circleStim,
                               numStim, correctStim, incorrectStim, clock, 
                               trials.thisTrial['fontSize'], 
-                              trials.thisTrial['number'], tNum, bNum, mouse
-                              , sms, call))
+                              trials.thisTrial['number'], tNum, bNum, mouse))
         
     endTime = time.perf_counter()
     totalTime = endTime - startTime
@@ -223,8 +208,7 @@ def sart_block(win, fb, omitNum, reps, bNum, sms, call):
     return resultList
     
 def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim, 
-               incorrectStim, clock, fontSize, number, tNum, bNum, mouse
-               , sms, call):
+               incorrectStim, clock, fontSize, number, tNum, bNum, mouse):
     startTime = time.perf_counter()
     alertSent = 0
     alertType = "NA"
@@ -244,13 +228,10 @@ def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim,
     maskStartTime = time.perf_counter()
     win.flip()
     if tNum in [4, 93, 182, 271]:
-        alertSent = 1
-        if sms == True:
+        if bNum == 1:
+            alertSent = 1
             alertType = "SMS"
-        elif call == True:
-            alertType = "Call"
-        else:
-            alertType = "No Alert"
+
     waitTime = .90 - (time.perf_counter() - maskStartTime)
     core.wait(waitTime, hogCPUperiod=waitTime)
     allKeys = event.getKeys(timeStamped=clock)
@@ -282,6 +263,19 @@ def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim,
     return [str(bNum), str(tNum), str(alertSent), str(alertType), str(number),
             str(omitNum), str(respAcc), str(respRt), str(startTime), 
             str(endTime), str(totalTime)]
+
+def post_experiment():
+    question = gui.Dlg(title="Post_Experiment")
+    question.addText("Post Experiment Questions")
+    question.addField("What did the participant think was the purpose of the study?")
+    question.addField("What are your current notification settings", 
+                  choices=["Please Select", "Vibrate", "Auditory Cue", "Combination","Silent", "Other"])
+    question.show()
+    if question.OK:
+        questiondata = question.data
+    else:
+        exit("Incomplete info")
+    return questiondata
 
 def main():
     sart(reps=8, omitNum=3, practice=True,      
