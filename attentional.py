@@ -60,13 +60,12 @@ def sart(monitor="testMonitor", reps=8, omitNum=3, practice=True,
                   "timing_function\n")
     for line in mainResultList:
         for item in partInfo:
-            if item not in ['Part. Phone: ','Part. Email: ']:
-                outFile.write(str(partInfo[item]) + "\t")
+            outFile.write(str(partInfo[item]) + "\t")
         for col in line:
             outFile.write(str(col) + "\t")
-        outFile.write("time.clock()\n")
+        outFile.write("time.perf_clock()\n")
     outFile.close()
-
+    sart_post_questions(win)
     win.close()
     postQuestion = post_experiment()
     outFile2.write("part_num\tph_Current_Setting\tPh_Current_Setting\n")
@@ -83,8 +82,6 @@ def part_info_gui():
     info.addField("Part. Gender: ", 
                   choices=["Please Select", "Male", "Female", "Other"])
     info.addField("Part. Age:  ")
-    info.addField("Part. Email: ")
-    info.addField("Part. Phone: ")
     info.addField("Do you have normal or corrected-to-normal vision?", 
                   choices=["Please Select", "Yes", "No"])
     info.addText("Experimenter Info")
@@ -264,12 +261,23 @@ def sart_trial(win, fb, omitNum, xStim, circleStim, numStim, correctStim,
             str(omitNum), str(respAcc), str(respRt), str(startTime), 
             str(endTime), str(totalTime)]
 
+def sart_post_questions(win):
+    inst = visual.TextStim(win, text=("You have finished all the trials!\n\n" +
+                                      "You will get some post interview questions now. " +
+                                     "\nPlease read them carefully and answer them as honestly as possible."
+                                      + "\nAgain thank you for your participation!"
+                                      + "\n\n Press b whenever you are ready to answer the questions."), 
+                           color="white", height=0.7, pos=(0, 0))
+    event.clearEvents()
+    while 'b' not in event.getKeys():
+        inst.draw()
+        win.flip() 
+
 def post_experiment():
     question = gui.Dlg(title="Post_Experiment")
     question.addText("Post Experiment Questions")
     question.addField("What did the participant think was the purpose of the study?")
-    question.addField("What are your current notification settings", 
-                  choices=["Please Select", "Vibrate", "Auditory Cue", "Combination","Silent", "Other"])
+    question.addField("Where you distracted by the phone? Explain why yes or no.")
     question.show()
     if question.OK:
         questiondata = question.data
